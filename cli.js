@@ -33,6 +33,8 @@ program
 program
     .command('use <registry>')
     .description('Change registry to registry')
+    .option('--npm', 'Add cheese with optional type')
+    .option('--yarn', 'Add cheese with optional type')
     .action(onUse);
 
 program
@@ -99,33 +101,34 @@ function showCurrent() {
     });
 }
 
-function onUse(name) {
+function onUse(name, options) {
     var allRegistries = getAllRegistry();
     if (allRegistries.hasOwnProperty(name)) {
         var registry = allRegistries[name];
         
-        fs.writeFile(YARNRC, 'registry "' + registry.registry + '"', function (err) {
-          if (err) throw err;
-          // console.log('It\'s saved!');
-          
-          printMsg([
-              '', '   YARN Registry has been set to: ' + registry.registry, ''
-          ]);
-        });
-        
-        // 同时更改npm的源
-        npm.load(function (err) {
-            if (err) return exit(err);
-
-            npm.commands.config(['set', 'registry', registry.registry], function (err, data) {
+        if(!options.npm){
+            fs.writeFile(YARNRC, 'registry "' + registry.registry + '"', function (err) {
+            if (err) throw err;
+                // console.log('It\'s saved!');
+            printMsg([
+                '', '   YARN Registry has been set to: ' + registry.registry, ''
+            ]);
+            });
+        }
+        if(!options.yarn){
+            npm.load(function (err) {
                 if (err) return exit(err);
-                console.log('                        ');
-                var newR = npm.config.get('registry');
-                printMsg([
-                    '', '   NPM Registry has been set to: ' + newR, ''
-                ]);
-            })
-        });
+    
+                npm.commands.config(['set', 'registry', registry.registry], function (err, data) {
+                    if (err) return exit(err);
+                    console.log('                        ');
+                    var newR = npm.config.get('registry');
+                    printMsg([
+                        '', '   NPM Registry has been set to: ' + newR, ''
+                    ]);
+                })
+            });
+        }
     } else {
         printMsg([
             '', '   Not find registry: ' + name, ''
